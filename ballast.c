@@ -45,7 +45,7 @@ int attacked=0; /* Are we mad to fire at 0 degrees */
 int stat=0;
 int exitted=0;
 int menu_item=0;
-int target_range=0;
+float target_range=0;
 int keypress=0;
 
 
@@ -59,11 +59,11 @@ int main() {
   }
   printf("Port Access Gained successfully\n");
   while(exitted !=1) {
-    printf("Type '1' for reset\nType '2' for attack\nType anything other than 1 or 2 for exiting\n>>>");
+    printf("Type '1' for reset\nType '2' for attack\nType 3 for exiting\n>>>");
     scanf("%d",&menu_item);
     if(menu_item==2) {
-      printf("\nEnter target distance:");
-      scanf("%d",&target_range);
+      printf("\nEnter target distance:\n>>>");
+      scanf("%f",&target_range);
       if(!validate_range(target_range)) {
 	printf("\nRange invalidated\n");
 	continue;
@@ -131,40 +131,39 @@ int validate_range(a){
 }
 
 void attack() {
-  clock_t t1,t2;
-  int starttime,timetaken,currenttime,timeelasped;
-  timetaken= (int) (asin((target_range*ACC_DUE_GRAVITY)/(INI_VELOCITY*INI_VELOCITY)) * TIME_PER_ANGLE)* (PI/180);
+  float timetaken;
+  int timeint;
+  timetaken= ((asin((target_range*ACC_DUE_GRAVITY)/(INI_VELOCITY*INI_VELOCITY))/2) * TIME_PER_ANGLE) * (180/PI);
+  timeint=(int)timetaken;
   //Debug:
-  printf("\nDebug:Starttime=%d Timetake=%d Current time=%d Timeelasped=%d\n",starttime,timetaken,currenttime,timeelasped);
+  //printf("\nDebug:Timetaken=%f Timeint=%d\n",timetaken,timeint);
+  //printf("Radians=%d and Degrees=%d",(asin((target_range*ACC_DUE_GRAVITY)/(INI_VELOCITY*INI_VELOCITY))/2),(asin((target_range*ACC_DUE_GRAVITY)/(INI_VELOCITY*INI_VELOCITY))/2)*180/PI);
   switch_relay(1,1);
-  t1=clock();
-  starttime= t1 / CLOCKS_PER_SEC;
-  while(1) {
-    t2=clock();
-    currenttime= t2 / CLOCKS_PER_SEC;
-    timeelasped=currenttime-starttime;
-    //Debug:
-    printf("\nDebug:Starttime=%d Timetake=%d Current time=%d Timeelasped=%d\n",starttime,timetaken,currenttime,timeelasped);
+  sleep(timeint);
+  /*
+   Declaration on POSIX compliant systems
     
-    if(timeelasped>=timetaken) {
-      switch_relay(1,0);
-      attacked=1;
-      resetted=0;
-      break;
-    }
-  }
+   sleep(time_in_second)
+   
+   Declaration on windows system 
+   
+   Sleep(time_in_milisecond)
+  */
+  switch_relay(1,0);
+  attacked=1;
+  resetted=0;
 }
 
 void reset() {
-  printf("Press \"a\" when on horizon:\n");
+  printf("Press \"a\" and press \"Enter\"  when on horizon:\n");
   switch_relay(2,1);
   while(1) {
-    if((keypress=getchar()) =='a') {
-      switch_relay(2,0);
-      resetted=1;
-      attacked=0;
-      break;
+    if((keypress=getchar()) == EOL) {
+       break;
     }
   }
+  switch_relay(2,0);
+  resetted=1;
+  attacked=0;
 }
 

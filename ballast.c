@@ -10,6 +10,7 @@
 #define CONTROL BASE_PORT+2
 #define RANGE 40.816
 #define PI 3.14159265
+#define EOL "\n"
 
 /* Linux Includes */
 #include <stdio.h>
@@ -35,7 +36,7 @@
 int getport();
 int switch_relay(int,int);
 void reset();
-int validate_range(int);
+int validate_range(float);
 void attack();
 
 
@@ -124,10 +125,15 @@ int switch_relay(relay_no,status) {
   }
 }
 
-int validate_range(a){
-  if(a>=RANGE || a<=0) {
+int validate_range(float a){
+  if(a>=RANGE || a<=0.) {
+    //printf("Comparing 1");
     return 0;
   }
+  else
+    //printf("Comparing 2");
+    return 1;
+  
 }
 
 void attack() {
@@ -136,8 +142,8 @@ void attack() {
   timetaken= ((asin((target_range*ACC_DUE_GRAVITY)/(INI_VELOCITY*INI_VELOCITY))/2) * TIME_PER_ANGLE) * (180/PI);
   timeint=(int)timetaken;
   //Debug:
-  //printf("\nDebug:Timetaken=%f Timeint=%d\n",timetaken,timeint);
-  //printf("Radians=%d and Degrees=%d",(asin((target_range*ACC_DUE_GRAVITY)/(INI_VELOCITY*INI_VELOCITY))/2),(asin((target_range*ACC_DUE_GRAVITY)/(INI_VELOCITY*INI_VELOCITY))/2)*180/PI);
+  printf("\nDebug:Timetaken=%f Timeint=%d\n",timetaken,timeint);
+  printf("Radians=%d and Degrees=%d",(asin((target_range*ACC_DUE_GRAVITY)/(INI_VELOCITY*INI_VELOCITY))/2),(asin((target_range*ACC_DUE_GRAVITY)/(INI_VELOCITY*INI_VELOCITY))/2)*180/PI);
   switch_relay(1,1);
   sleep(timeint);
   /*

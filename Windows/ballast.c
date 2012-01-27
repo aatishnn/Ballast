@@ -1,7 +1,7 @@
 /* Main Program */
 #define BASE_PORT ((short) 0x378)
-#define RELAY1_ON 0xC0 //Data Port 1 @0-7
-#define RELAY2_ON 0x84 //Data Port 5
+#define RELAY1_ON 100//0x2 //Data Port 1 @0-7
+#define RELAY2_ON 1000 //Data Port 5
 #define RELAY_OFF 0
 #define TIME_PER_ANGLE 2
 #define INI_VELOCITY 20
@@ -10,6 +10,7 @@
 #define CONTROL BASE_PORT+2
 #define RANGE 40.816
 #define PI 3.14159265
+#define EOL "\n"
 
 /* Linux Includes */
 /*
@@ -37,19 +38,26 @@
 /* Windows Includes */
 #include <stdio.h>
 #include <conio.h>
-#include <windows.h>
+#include <windows.h> // For Sleep
 #include <process.h>
 #include <time.h>
 #include <math.h>
 #include "inpout32.h"
-*/
 
+//Debug
+/*
+extern int inpout32_init(void);
+extern void inpout32_unload(void);
+extern short Inp32(short portaddr);
+extern void Out32(short portaddr,short datum);
+*/
 /* Function Declarations */
 int getport();
 int switch_relay(int,int);
 void reset();
 int validate_range(float);
 void attack();
+void sleep_d(unsigned int mseconds);
 
 
 /* Global Variables */
@@ -63,9 +71,9 @@ int keypress=0;
 
 
 int main() {
-  printf("Program controller @aatish...\n");
-  printf("Getting Port Access\n");
   HINSTANCE hLib;
+  printf("\nProgram controller @aatish...\n");
+  printf("\nGetting Port Access\n");
   // Attempt to initialize the interface
   if (inpout32_init() != 0) {
     
@@ -74,9 +82,11 @@ int main() {
     
     exit (-1);
   }
-  printf("Port Access Gained successfully\n");
+  printf("\nPort Access Gained successfully\n");
   while(exitted !=1) {
-    printf("Type '1' for reset\nType '2' for attack\nType 3 for exiting\n>>>");
+	switch_relay(1,0);
+	switch_relay(2,0);
+    printf("\nType '1' for reset\nType '2' for attack\nType 3 for exiting\n>>>");
     scanf("%d",&menu_item);
     if(menu_item==2) {
       printf("\nEnter target distance:\n>>>");
@@ -127,17 +137,17 @@ int switch_relay(relay_no,status) {
       return 1;
     }
     else if(status==0) {
-      outb(BASE_PORT,RELAY_OFF);
+      Out32(BASE_PORT,RELAY_OFF);
       return 1;
     }
   }
   if(relay_no==2) {
     if(status==1) {
-      outb(BASE_PORT,RELAY2_ON);
+      Out32(BASE_PORT,RELAY2_ON);
       return 1;
     }
     else if(status==0) {
-      outb(BASE_PORT,RELAY_OFF,);
+      Out32(BASE_PORT,RELAY_OFF);
       return 1;
     }
   }
@@ -147,18 +157,17 @@ int validate_range(float a){
   if(a>=RANGE || a<=0.) {
     return 0;
   }
+  return 1;
 }
 
 void attack() {
   float timetaken;
-  int timeint;
   timetaken= ((asin((target_range*ACC_DUE_GRAVITY)/(INI_VELOCITY*INI_VELOCITY))/2) * TIME_PER_ANGLE) * (180/PI);
-  timeint=(int)timetaken;
   //Debug:
-  //printf("\nDebug:Timetaken=%f Timeint=%d\n",timetaken,timeint);
-  //printf("Radians=%d and Degrees=%d",(asin((target_range*ACC_DUE_GRAVITY)/(INI_VELOCITY*INI_VELOCITY))/2),(asin((target_range*ACC_DUE_GRAVITY)/(INI_VELOCITY*INI_VELOCITY))/2)*180/PI);
+  printf("\nDebug:Timetaken=%f\n",timetaken);
+  printf("\nRadians=%f and Degrees=%f\n",(asin((target_range*ACC_DUE_GRAVITY)/(INI_VELOCITY*INI_VELOCITY))/2),(asin((target_range*ACC_DUE_GRAVITY)/(INI_VELOCITY*INI_VELOCITY))/2)*180/PI);
   switch_relay(1,1);
-  sleep(timeint*1000);
+  Sleep(timetaken*1000);
   /*
    Declaration on POSIX compliant systems
     
@@ -174,15 +183,20 @@ void attack() {
 }
 
 void reset() {
-  printf("Press \"a\" and press \"Enter\"  when on horizon:\n");
+  printf("\nPress \"a\" when on horizon:\n");
   switch_relay(2,1);
   while(1) {
-    if((keypress=getchar()) == EOL) {
+    if((keypress=getch()) == 'a') {
        break;
     }
   }
   switch_relay(2,0);
   resetted=1;
   attacked=0;
+}
+void sleep_d(unsigned int mseconds)
+{
+    clock_t goal = mseconds + clock();
+    while (goal > clock());
 }
 
